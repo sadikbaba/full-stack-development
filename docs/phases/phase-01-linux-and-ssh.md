@@ -1,239 +1,96 @@
 # Phase 1: Linux Fundamentals and SSH
 
-> **Goal:** Become comfortable operating a Linux server well enough to run and maintain a production application.
+> **Goal:** Operate a Linux system well enough to eventually run and maintain a production application.
 
-Linux is the foundation underneath much of modern deployment. Before working with Gunicorn, Nginx, Docker, cloud servers, or CI/CD, we need to understand the machine those tools are running on.
+Linux is the foundation underneath tools such as Gunicorn, Nginx, Docker, PostgreSQL, Redis, and Celery.
 
-This phase is practical. Commands are not learned for the sake of collecting terminal trivia.
-
----
-
-## What We Will Learn
-
-* Linux filesystem and paths
-* Users and groups
-* File ownership
-* File and directory permissions
-* Processes and services
-* Ports and basic networking
-* Package management
-* Environment variables
-* `systemctl`
-* `journalctl`
-* CPU, memory, and disk inspection
-* Firewall basics
-* SSH
-* SSH keys
-* Remote commands and file transfer
-* Root vs normal users
-* Basic server hardening
+This phase focuses on understanding the machine before deploying applications on top of it.
 
 ---
 
-# Progress
+## Phase Progress
 
-### Users, Groups, Ownership & Permissions
+### Files, Users, Ownership and Permissions
 
-* [x] Identify the current user
-* [x] Inspect groups
-* [x] Understand UID and GID
-* [x] Understand file ownership
-* [x] Understand permission groups: owner, group, others
-* [x] Understand `r`, `w`, and `x`
-* [x] Read permissions from `ls -l`
-* [x] Understand directory execute permission
-* [x] Understand numeric permissions
-* [x] Inspect metadata with `stat`
-* [x] Change permissions with `chmod`
-* [ ] Change file ownership with `chown`
-* [ ] Practice group-based access
+- [x] Current user with `whoami`
+- [x] Groups with `groups`
+- [x] UID and GID with `id`
+- [x] File ownership
+- [x] Owner, group, and others
+- [x] `r`, `w`, and `x`
+- [x] Numeric permissions
+- [x] `ls -l`
+- [x] `ls -ld`
+- [x] `stat`
+- [x] `chmod`
+- [x] Symbolic permissions such as `u+w`, `u-w`, and `g+w`
+- [x] Directory traversal with `x`
+- [x] `chown`
+- [x] Root vs normal-user ownership
+- [ ] Group-based access with different users
+
+### Processes
+
+- [x] Understand what a process is
+- [x] Understand PID
+- [x] Understand process ownership
+- [x] Understand parent and child processes
+- [x] Understand PPID
+- [x] Use `ps`
+- [x] Understand `ps aux`
+- [x] Understand `ps -ef`
+- [x] Understand pipes with `|`
+- [x] Understand `head` and `tail`
+- [x] Use `top`
+- [x] Understand CPU and memory columns at a basic level
+- [x] Understand running and sleeping states
+- [x] Understand `kill` and `SIGTERM`
+- [x] Understand `kill -9` and `SIGKILL`
+- [ ] Safely terminate a test process
+- [ ] Inspect a real parent-child relationship
 
 ### Remaining Phase 1 Topics
 
-* [ ] Processes
-* [ ] Services
-* [ ] Ports
-* [ ] Package management
-* [ ] Environment variables
-* [ ] `systemctl`
-* [ ] `journalctl`
-* [ ] CPU, memory, and disk inspection
-* [ ] Firewall basics
-* [ ] SSH fundamentals
-* [ ] SSH key authentication
-* [ ] Remote commands
-* [ ] File transfer over SSH
-* [ ] Create a non-root deployment user
-* [ ] Basic server hardening
-* [ ] Production server practice
+- [ ] Services
+- [ ] Ports
+- [ ] Package management
+- [ ] Environment variables
+- [ ] `systemctl`
+- [ ] `journalctl`
+- [ ] CPU, memory, and disk inspection
+- [ ] Basic networking
+- [ ] Firewall
+- [ ] SSH fundamentals
+- [ ] SSH key authentication
+- [ ] Remote commands
+- [ ] File transfer
+- [ ] Non-root deployment user
+- [ ] Basic server hardening
+- [ ] Production server lab
 
 ---
 
-# Lesson 2: Users, Groups, Ownership, and Permissions
+# Users, Ownership and Permissions
 
-Linux needs to answer a basic question:
+Linux permissions answer:
 
 > **Who is allowed to do what?**
 
-This becomes especially important on a production server where multiple users and processes may interact with the same system.
-
----
-
-## 1. Current User
-
-We used:
-
-```bash
-whoami
-```
-
-Result:
+Files and directories have:
 
 ```text
-sadik
-```
-
-This tells us which user is currently running the shell.
-
----
-
-## 2. Groups
-
-We used:
-
-```bash
-groups
-```
-
-Result:
-
-```text
-sadik wheel
-```
-
-The user belongs to:
-
-* `sadik`
-* `wheel`
-
-Groups allow Linux to give shared permissions to multiple users.
-
----
-
-## 3. User and Group IDs
-
-We used:
-
-```bash
-id
-```
-
-Example result:
-
-```text
-uid=1000(sadik) gid=1000(sadik) groups=1000(sadik),10(wheel)
-```
-
-Important concepts:
-
-* `UID` identifies a user.
-* `GID` identifies a group.
-* A user can belong to multiple groups.
-
----
-
-# 4. File Ownership
-
-We inspected files with:
-
-```bash
-ls -l
+owner
+group
+permissions
 ```
 
 Example:
 
 ```text
--rw-r--r--. 1 sadik sadik 2240 README.md
+-rw-r--r--  sadik sadik
 ```
 
-The important ownership section is:
-
-```text
-sadik sadik
-```
-
-Meaning:
-
-```text
-owner: sadik
-group: sadik
-```
-
-Linux permissions are then applied based on:
-
-```text
-owner | group | others
-```
-
----
-
-# 5. Reading Linux Permissions
-
-A permission string such as:
-
-```text
--rw-r--r--
-```
-
-can be separated into:
-
-```text
--   rw-   r--   r--
-    │     │     │
-    │     │     └── others
-    │     └──────── group
-    └────────────── owner
-```
-
-The first character identifies the type:
-
-```text
--   regular file
-d   directory
-l   symbolic link
-```
-
----
-
-# 6. Read, Write, Execute
-
-Linux uses three basic permissions:
-
-| Permission | Meaning            |
-| ---------- | ------------------ |
-| `r`        | read               |
-| `w`        | write              |
-| `x`        | execute / traverse |
-
-For a regular file:
-
-* `r` allows reading
-* `w` allows modifying
-* `x` allows executing
-
-For a directory:
-
-* `r` allows listing directory contents
-* `w` allows creating/removing entries
-* `x` allows entering/traversing the directory
-
-That difference matters. Directory `x` does not mean "run the directory." Humans invented enough confusing terminology already.
-
----
-
-# 7. Numeric Permissions
-
-We learned that permissions can also be represented numerically:
+Permission values:
 
 ```text
 r = 4
@@ -244,157 +101,147 @@ x = 1
 Therefore:
 
 ```text
-rw- = 4 + 2 = 6
-r-- = 4
-r-x = 4 + 1 = 5
-rwx = 4 + 2 + 1 = 7
+644 = rw-r--r--
+755 = rwxr-xr-x
 ```
 
-For example:
+For files, `x` means executable.
+
+For directories, `x` means the user can traverse or access the directory.
+
+We tested this by removing directory execute permission and receiving a permission error.
+
+## Changing Permissions
+
+Numeric:
+
+```bash
+chmod 444 file
+chmod 644 file
+```
+
+Symbolic:
+
+```bash
+chmod u-w file
+chmod u+w file
+chmod g+w file
+```
+
+## Changing Ownership
+
+```bash
+sudo chown root:root file
+```
+
+changed ownership to:
 
 ```text
--rw-r--r--
+root root
 ```
 
-becomes:
+We restored it with:
 
-```text
-644
+```bash
+sudo chown sadik:sadik file
 ```
 
-because:
-
-```text
-rw- = 6
-r-- = 4
-r-- = 4
-```
-
-A directory such as:
-
-```text
-drwxr-xr-x
-```
-
-is:
-
-```text
-755
-```
+A normal user could not assign the file to `root` without `sudo`.
 
 ---
 
-# 8. Inspecting Directories
+# Processes
 
-We used:
+A **program** is code available to run.
 
-```bash
-ls -ld .
-ls -ld docs
-```
+A **process** is a running instance of that program.
 
-This lets us inspect the directory itself instead of listing its contents.
-
-Example:
+Linux identifies each process using a:
 
 ```text
-drwxr-xr-x. 1 sadik sadik ...
+PID
 ```
 
-The important parts are:
+Processes also run as Linux users, so normal file permissions still apply to them.
 
-```text
-d        directory
-rwx      owner permissions
-r-x      group permissions
-r-x      others permissions
-```
-
----
-
-# 9. Inspecting File Metadata
-
-We used:
+## Inspecting Processes
 
 ```bash
-stat README.md
+ps
 ```
 
-This showed information including:
-
-* file size
-* inode
-* permissions
-* UID
-* GID
-* ownership
-* access time
-* modification time
-* change time
-
-For now, the important part is using `stat` when `ls -l` does not provide enough information.
-
----
-
-# 10. Practical Permissions Lab
-
-We created a reusable lab:
-
-```text
-labs/phase-01-linux-and-ssh/
-└── permissions/
-    ├── private/
-    │   └── private.txt
-    ├── public/
-    │   └── public.txt
-    └── README.md
-```
-
-This lab will continue to be used as we learn more about permissions and ownership.
-
----
-
-## 11. Changing Permissions with `chmod`
-
-We changed the private file from its normal permissions:
-
-```text
--rw-r--r--
-```
-
-to:
+shows a small process view for the current terminal/session.
 
 ```bash
-chmod 444 labs/phase-01-linux-and-ssh/permissions/private/private.txt
+ps aux
 ```
 
-We then inspected it:
+shows a broad detailed process list.
 
 ```bash
-ls -l labs/phase-01-linux-and-ssh/permissions/private/private.txt
+ps -ef
 ```
 
-Result:
+includes information useful for identifying parent and child processes.
+
+```bash
+top
+```
+
+shows process activity continuously.
+
+## Parent and Child Processes
+
+A process that starts another process is the parent.
+
+The process it starts is the child.
 
 ```text
--r--r--r--
+bash
+└── python
 ```
 
-The owner no longer had write permission.
+Linux records this using:
 
-When we attempted to edit the file in VS Code, VS Code reported that the file was read-only.
+```text
+PID  = Process ID
+PPID = Parent Process ID
+```
 
-This was an important practical result:
+The relationship is identified using:
 
-> Linux permissions are not theoretical. They directly control what applications can do with files.
+```text
+child PPID = parent PID
+```
 
-We restored the permissions with:
+Not by assuming the smaller PID is the parent.
+
+## Process States
+
+Two states observed in `top`:
+
+```text
+R = running
+S = sleeping/waiting
+```
+
+A sleeping process is still alive. It is waiting for work or another event.
+
+## Stopping Processes
 
 ```bash
-chmod 644 labs/phase-01-linux-and-ssh/permissions/private/private.txt
+kill PID
 ```
 
-The file became writable again.
+normally sends `SIGTERM`, asking the process to terminate cleanly.
+
+```bash
+kill -9 PID
+```
+
+sends `SIGKILL`, which forces immediate termination.
+
+`SIGKILL` should not normally be the first option.
 
 ---
 
@@ -405,35 +252,29 @@ whoami
 groups
 id
 ls -l
-ls -ld .
-ls -ld docs
-stat README.md
-chmod 444 <file>
-chmod 644 <file>
+ls -ld
+stat
+chmod
+chown
+ps
+ps aux
+ps aux | head
+ps aux | tail
+top
+```
+
+Commands understood but still requiring practical testing:
+
+```bash
+ps -ef
+kill PID
+kill -9 PID
 ```
 
 ---
 
-# Key Takeaways
+## Rule
 
-By the end of this lesson, we understand that:
+A topic is marked complete only after it has been **understood and practiced**.
 
-1. Linux identifies users with UIDs.
-2. Users can belong to multiple groups.
-3. Files and directories have owners and groups.
-4. Permissions are divided into owner, group, and others.
-5. `r`, `w`, and `x` have different meanings for files and directories.
-6. Permissions can be represented numerically.
-7. `chmod` changes permissions.
-8. File permissions affect real applications such as VS Code.
-9. We should practice permissions on controlled lab files before touching important system files.
-
----
-
-## Practical Rule
-
-We will continue using the same lab instead of creating disposable test files.
-
-As new concepts are learned, the lab and this document will be updated with the commands we actually used, the results we observed, and the problems we encountered.
-
-**Nothing gets marked complete until it has been understood and practiced.**
+The phase documentation records what was actually learned, while the lab folders contain the practical exercises.
