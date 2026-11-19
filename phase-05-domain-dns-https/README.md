@@ -296,33 +296,3 @@ commands on the VPS.
 **Phase 5 exit criterion met:** the application responds over HTTPS on
 `nasibi.duckdns.org` without a certificate verification error, and HTTP
 redirects to HTTPS.
-
-## 12. Git and secrets
-
-From the local repository `~/development-engineering`, review the
-documentation change:
-
-``` bash
-git status
-git diff
-```
-
-Stage only the intended roadmap/documentation files, then commit and
-push:
-
-``` bash
-git add <intended-files>
-git diff --cached
-git commit -m "Document phase 5 domain and HTTPS deployment"
-git push
-```
-
-Never commit `.env`, `.venv`, the DuckDNS token, database passwords,
-Django `SECRET_KEY`, private keys or other credentials.
-
-## Next phase
-
-**Phase 6: Static and Media Files.**
-
-Do not begin it until this Phase 5 record is saved in the repository and
-pushed. Phase 6 will be handled separately, in roadmap order.
