@@ -1,0 +1,1 @@
+sudo docker run -d --name phase7-db --network phase7-network -e POSTGRES_DB=phase7db -e POSTGRES_USER=phase7user -e POSTGRES_PASSWORD=phase7temporary postgres:17-alpine
